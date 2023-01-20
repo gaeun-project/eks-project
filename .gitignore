@@ -4,5 +4,9 @@
 
 **/.terraform.lock.hcl
 
+terraform/eks/values/**
+terraform/vpc/values/**
+terraform/helm/values/**
+
 *.tfstate
 *.tfstate.*

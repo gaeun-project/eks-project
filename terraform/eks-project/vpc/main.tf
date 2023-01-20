@@ -28,7 +28,7 @@ module "vpc" {
   public_subnet_tags  = { "kubernetes.io/role/elb" = 1 }
 
   tags = {
-    "kubernetes.io/cluster/eks-cost-project-dev" = "shared"
+    "kubernetes.io/cluster/eks-project-dev" = "shared"
     Terraform                             = "true"
     Environment                           = "dev"
     Project                               = "eks-project"
