@@ -32,7 +32,10 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     kubernetes.io/ingress.class: alb
-    external-dns.alpha.kubernetes.io/hostname: dashboard.dev-portfolio.link
+    alb.ingress.kubernetes.io/inbound-cidr: 0.0.0.0/0
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\": 80},{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:750876142122:certificate/e0aa168a-65d1-408f-9e98-c83623d5a408"
+
 spec:
   {{- with .Values.ingress.className }}
   ingressClassName: {{ . | quote }}

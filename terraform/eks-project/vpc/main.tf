@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
     region         = "ap-northeast-2"
-    bucket         = "eks-project-tfstates-dev"
-    key            = "eks-project-tfstates-dev/eks-project-vpc-dev.tfstate"
+    bucket         = "mad-eks-project-tfstates-dev"
+    key            = "mad-eks-project-tfstates-dev/eks-project-vpc-dev.tfstate"
     profile        = "gaeun-dev"
     dynamodb_table = "terraform-lock"
   }

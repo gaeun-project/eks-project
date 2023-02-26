@@ -4,5 +4,5 @@
 "region": "ap-northeast-2"
 "serviceAccount":
   "annotations":
-    "eks.amazonaws.com/role-arn": "arn:aws:iam::785964833143:role/aws-load-balancer-controller"
+    "eks.amazonaws.com/role-arn": "arn:aws:iam::750876142122:role/aws-load-balancer-controller"
   "name": "aws-load-balancer-controller"

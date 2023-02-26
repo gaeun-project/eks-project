@@ -2,12 +2,12 @@
   "region": "ap-northeast-2"
   "zoneType": "public"
 "domainFilters":
-- "dev-portfolio.link"
+- "multi-account-dashboard.com"
 "provider": "aws"
 "registry": "txt"
 "serviceAccount":
   "annotations":
-    "eks.amazonaws.com/role-arn": "arn:aws:iam::785964833143:role/external-dns-eks-project-dev"
+    "eks.amazonaws.com/role-arn": "arn:aws:iam::750876142122:role/external-dns-eks-project-dev"
   "name": "external-dns"
 "sources":
 - "service"

@@ -10,3 +10,7 @@ terraform/helm/values/**
 
 *.tfstate
 *.tfstate.*
+
+#EKS 접근 정보
+k8s-access/**
+my-values.yaml

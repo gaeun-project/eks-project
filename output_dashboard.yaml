@@ -178,7 +178,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-dashboard
-    namespace: kube-system
+    namespace: redash
 ---
 # Source: kubernetes-dashboard/templates/role.yaml
 # Copyright 2017 The Kubernetes Authors.
@@ -260,7 +260,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubernetes-dashboard
-    namespace: kube-system
+    namespace: redash
 ---
 # Source: kubernetes-dashboard/templates/service.yaml
 # Copyright 2017 The Kubernetes Authors.
@@ -295,8 +295,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: http
+  - port: 443
+    targetPort: http #여기 https로 변경함.
     name: http
   selector:
 
@@ -362,11 +362,15 @@ spec:
       serviceAccountName: kubernetes-dashboard
       containers:
       - name: kubernetes-dashboard
-        image: "kubernetesui/dashboard:v2.7.0"
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/redash:latest
         imagePullPolicy: IfNotPresent
         args:
-          - --namespace=kube-system
+          - --namespace=redash
           - --metrics-provider=none
+
+          - --enable-skip-login
+          - --enable-insecure-login
+          - --system-banner="Welcome to Kubernetes"
         ports:
         - name: http
           containerPort: 9090
@@ -433,18 +437,30 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/inbound-cidr: 0.0.0.0/0
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\": 80},{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:750876142122:certificate/e0aa168a-65d1-408f-9e98-c83623d5a408"
+
 spec:
   rules:
-    - host: dashboard.dev-portfolio.link
+    - host: dashboard.multi-account-dashboard.com
       http:
         paths:
           - path: /
-            pathType: Prefix
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: kubernetes-dashboard
                 port:
-                  number: 80
+                  number: 443
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: kubernetes-dashboard
+                port:
+                  number: 443
 ---
 # Source: kubernetes-dashboard/templates/clusterrole-readonly.yaml
 # Copyright 2017 The Kubernetes Authors.

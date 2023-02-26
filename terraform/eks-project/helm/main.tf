@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
     region         = "ap-northeast-2"
-    bucket         = "eks-project-tfstates-dev"
-    key            = "eks-project-tfstates-dev/eks-project-helm-dev.tfstate"
+    bucket         = "mad-eks-project-tfstates-dev"
+    key            = "mad-eks-project-tfstates-dev/eks-project-helm-dev.tfstate"
     profile        = "gaeun-dev"
     dynamodb_table = "terraform-lock"
   }
@@ -21,9 +21,9 @@ provider "aws" {
 data "terraform_remote_state" "eks" {
   backend = "s3"
   config = {
-    bucket         = "eks-project-tfstates-dev"
+    bucket         = "mad-eks-project-tfstates-dev"
     region         = "ap-northeast-2"
-    key            = "eks-project-tfstates-dev/eks-project-eks-dev.tfstate"
+    key            = "mad-eks-project-tfstates-dev/eks-project-eks-dev.tfstate"
     profile        = "gaeun-dev"
     dynamodb_table = "terraform-lock"
   }
@@ -52,7 +52,7 @@ module "helm_services" {
   eks_cluster_name            = local.eks_cluster_name
   output_eks                  = local.eks
   profile                     = local.profile
-  external_dns_zones          = ["dev-portfolio.link"]
+  external_dns_zones          = ["multi-account-dashboard.com"]
 
   providers = {
     aws.dev = aws.gaeun-dev

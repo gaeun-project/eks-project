@@ -41,10 +41,10 @@ labels: {}
 
 ## Additional container arguments
 ##
-# extraArgs:
-#   - --enable-skip-login
-#   - --enable-insecure-login
-#   - --system-banner="Welcome to Kubernetes"
+extraArgs:
+  - --enable-skip-login
+  - --enable-insecure-login
+  - --system-banner="Welcome to Kubernetes"
 
 ## Additional container environment variables
 ##
@@ -136,7 +136,7 @@ resources:
 ## Serve application over HTTP without TLS
 ##
 ## Note: If set to true, you may want to add --enable-insecure-login to extraArgs
-protocolHttp: false
+protocolHttp: true #false
 
 service:
   type: ClusterIP
@@ -192,7 +192,7 @@ ingress:
   ## Both `/` and `/*` are required to work on gce ingress.
   paths:
     - /
-  #  - /*
+    - /*
 
   ## Custom Kubernetes Dashboard Ingress paths. Will override default paths.
   ##
@@ -215,7 +215,7 @@ ingress:
   ## Must be provided if Ingress is enabled
   ##
   hosts:
-    - dashboard.dev-portfolio.link
+    - dashboard.multi-account-dashboard.com
   ## Kubernetes Dashboard Ingress TLS configuration
   ## Secrets must be manually created in the namespace
   ##
