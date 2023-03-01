@@ -20,5 +20,6 @@ tf.all-clean:
 	@terraform -chdir=terraform/eks-project/vpc destroy -auto-approve
 
 helm.deploy-superset:
+	@kubectl create ns superset
 	@helm upgrade --install --values my-value-superset.yaml superset ./superset/helm/superset
 

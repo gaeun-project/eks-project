@@ -14,3 +14,7 @@ terraform/helm/values/**
 #EKS 접근 정보
 k8s-access/**
 my-values.yaml
+output_elasticsearch.yaml
+output_dashboard.yaml
+output_redash.yaml
+my-value-superset.yaml

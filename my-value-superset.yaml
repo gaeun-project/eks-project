@@ -42,6 +42,7 @@ bootstrapScript: |
     psycopg2-binary==2.9.1 \
     redis==3.5.3 \
     PyAthenaJDBC>1.0.9 \
+    elasticsearch-dbapi \
     PyAthena>1.2.0 &&\
   if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
 # -- The name of the secret which we will use to generate a superset_config.py file
@@ -215,6 +216,7 @@ ingress:
     alb.ingress.kubernetes.io/inbound-cidr: 0.0.0.0/0
     alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\": 80},{\"HTTPS\":443}]"
     alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:750876142122:certificate/e0aa168a-65d1-408f-9e98-c83623d5a408"
+    alb.ingress.kubernetes.io/actions.redirect-www: '{"Type": "redirect", "RedirectConfig": { "Host": "superset.multi-account-dashboard.com", "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
   path: /*
   pathType: ImplementationSpecific
   hosts:
