@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: describe-cronjob
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName : cronjob-sa
+          containers:
+          - name: python-test
+            image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/python-test:latest
+            imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure
