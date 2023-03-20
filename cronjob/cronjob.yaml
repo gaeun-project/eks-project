@@ -8,7 +8,7 @@ spec:
     spec:
       template:
         spec:
-          serviceAccountName : cronjob-sa
+          serviceAccountName : cronjob-test-sa
           containers:
           - name: python-test
             image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/python-test:latest

@@ -42,6 +42,7 @@ bootstrapScript: |
     psycopg2-binary==2.9.1 \
     redis==3.5.3 \
     PyAthenaJDBC>1.0.9 \
+    elasticsearch-dbapi \
     Authlib \
     PyAthena>1.2.0 &&\
   if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
@@ -54,6 +55,7 @@ configFromSecret: '{{ template "superset.fullname" . }}-config'
 envFromSecret: '{{ template "superset.fullname" . }}-env'
 # -- This can be a list of templated strings
 envFromSecrets: []
+
 
 # -- Extra environment variables that will be passed into pods
 extraEnv:
@@ -136,10 +138,79 @@ extraVolumeMounts:
 # -- A dictionary of overrides to append at the end of superset_config.py - the name does not matter
 # WARNING: the order is not guaranteed
 # Files can be passed as helm --set-file configOverrides.my-override=my-file.py
-
-# This Line is related with report and Alert to connect Slack.
 configOverrides:
   {}
+  feature_flags: |
+    import ast
+
+    FEATURE_FLAGS = {
+        "ALERT_REPORTS": True
+    }
+
+    SMTP_HOST = os.getenv("SMTP_HOST","localhost")
+    SMTP_STARTTLS = ast.literal_eval(os.getenv("SMTP_STARTTLS", "True"))
+    SMTP_SSL = ast.literal_eval(os.getenv("SMTP_SSL", "False"))
+    SMTP_USER = os.getenv("SMTP_USER","superset")
+    SMTP_PORT = os.getenv("SMTP_PORT",25)
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD","superset")
+    SMTP_MAIL_FROM = os.getenv("SMTP_MAIL_FROM","superset@superset.com")
+
+    SLACK_API_TOKEN = os.getenv("SLACK_API_TOKEN",None)
+  celery_conf: |
+    from celery.schedules import crontab
+
+    class CeleryConfig(object):
+      broker_url = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
+      imports = ('superset.sql_lab', "superset.tasks", "superset.tasks.thumbnails", )
+      result_backend = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
+      task_annotations = {
+          'sql_lab.get_sql_results': {
+              'rate_limit': '100/s',
+          },
+          'email_reports.send': {
+              'rate_limit': '1/s',
+              'time_limit': 600,
+              'soft_time_limit': 600,
+              'ignore_result': True,
+          },
+      }
+      beat_schedule = {
+          'reports.scheduler': {
+              'task': 'reports.scheduler',
+              'schedule': crontab(minute='*', hour='*'),
+          },
+          'reports.prune_log': {
+              'task': 'reports.prune_log',
+              'schedule': crontab(minute=0, hour=0),
+          },
+          'cache-warmup-hourly': {
+              'task': 'cache-warmup',
+              'schedule': crontab(minute='*/30', hour='*'),
+              'kwargs': {
+                  'strategy_name': 'top_n_dashboards',
+                  'top_n': 10,
+                  'since': '7 days ago',
+              },
+          }
+      }
+
+    CELERY_CONFIG = CeleryConfig
+  reports: |
+    EMAIL_PAGE_RENDER_WAIT = 60
+    WEBDRIVER_BASEURL = "http://{{ template "superset.fullname" . }}:{{ .Values.service.port }}/"
+    WEBDRIVER_BASEURL_USER_FRIENDLY = "https://www.example.com/"
+    WEBDRIVER_TYPE= "chrome"
+    WEBDRIVER_OPTION_ARGS = [
+        "--force-device-scale-factor=2.0",
+        "--high-dpi-support=2.0",
+        "--headless",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        # This is required because our process runs as root (in order to install pip packages)
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-extensions",
+    ]
   # extend_timeout: |
   #    # Extend timeout to allow long running queries.
   #    SUPERSET_WEBSERVER_TIMEOUT = ...
@@ -209,20 +280,21 @@ service:
     http: nil
 
 ingress:
-  enabled: false
+  enabled: true
   # ingressClassName: nginx
   annotations:
-    {}
-    # kubernetes.io/tls-acme: "true"
-    ## Extend timeout to allow long running queries.
-    # nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
-    # nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    # nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-  path: /
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/inbound-cidr: 0.0.0.0/0
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\": 80},{\"HTTPS\":443}]"
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:750876142122:certificate/e0aa168a-65d1-408f-9e98-c83623d5a408"
+    alb.ingress.kubernetes.io/actions.redirect-www: '{"Type": "redirect", "RedirectConfig": { "Host": "superset.multi-account-dashboard.com", "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+  path: /*
   pathType: ImplementationSpecific
   hosts:
-    - chart-example.local
-  tls: []
+    - superset.multi-account-dashboard.com
+  # tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
@@ -347,13 +419,27 @@ supersetNode:
 
 # Superset Celery worker configuration
 supersetWorker:
-  replicaCount: 1
+  # replicaCount: 1
   # -- Worker startup command
   # @default -- a `celery worker` command
   command:
     - "/bin/sh"
     - "-c"
-    - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; celery --app=superset.tasks.celery_app:app worker"
+    - |
+      # Install chrome webdriver
+      # See https://github.com/apache/superset/blob/4fa3b6c7185629b87c27fc2c0e5435d458f7b73d/docs/src/pages/docs/installation/email_reports.mdx
+      apt update
+      wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+      apt install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb
+      wget https://chromedriver.storage.googleapis.com/88.0.4324.96/chromedriver_linux64.zip
+      unzip chromedriver_linux64.zip
+      chmod +x chromedriver
+      mv chromedriver /usr/bin
+      apt autoremove -yqq --purge
+      apt clean
+      rm -f google-chrome-stable_current_amd64.deb chromedriver_linux64.zip
+
+      . {{ .Values.configMountPath }}/superset_bootstrap.sh; celery --app=superset.tasks.celery_app:app worker
   # -- If true, forces deployment to reload on each upgrade
   forceReload: false
   # -- Init container
@@ -417,7 +503,7 @@ supersetWorker:
 # Superset beat configuration (to trigger scheduled jobs like reports)
 supersetCeleryBeat:
   # -- This is only required if you intend to use alerts and reports
-  enabled: false
+  enabled: true
   # -- Command
   # @default -- a `celery beat` command
   command:
