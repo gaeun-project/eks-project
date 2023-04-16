@@ -15,7 +15,6 @@ provider "aws" {
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-
   name               = "eks-project-vpc-dev"
   cidr               = "10.0.0.0/16"
   enable_nat_gateway = true

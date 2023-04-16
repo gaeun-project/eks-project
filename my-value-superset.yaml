@@ -44,8 +44,9 @@ bootstrapScript: |
     PyAthenaJDBC>1.0.9 \
     elasticsearch-dbapi \
     Authlib \
+    webdriver-manager \
     PyAthena>1.2.0 &&\
-  if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
+  if [ ! -f ~/bootstrap åå]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
 # -- The name of the secret which we will use to generate a superset_config.py file
 # Note: this secret must have the key superset_config.py in it and can include other files as well
 configFromSecret: '{{ template "superset.fullname" . }}-config'
@@ -59,6 +60,10 @@ envFromSecrets: []
 
 # -- Extra environment variables that will be passed into pods
 extraEnv:
+  SMTP_HOST: smtp.gmail.com
+  SMTP_USER: gaeun7229@gmail.com
+  SMTP_PORT: "587"
+  SMTP_MAIL_FROM: kimgaeun7220@gmail.com
   # Different gunicorn settings, refer to the gunicorn documentation
   # https://docs.gunicorn.org/en/stable/settings.html#
   # These variables are used as Flags at the gunicorn startup
@@ -91,6 +96,8 @@ extraEnvRaw:
 
 # -- Extra environment variables to pass as secrets
 extraSecretEnv:
+  SLACK_API_TOKEN: xoxb-4571693969715-4974017715571-Fe2QaKtuzjGmtvEKCmPLTTel
+  SMTP_PASSWORD: ykjjxdwpfrozvbnx
   # MAPBOX_API_KEY: ...
   # # Google API Keys: https://console.cloud.google.com/apis/credentials
   # GOOGLE_KEY: ...
@@ -154,7 +161,8 @@ configOverrides:
     SLACK_API_TOKEN = os.getenv("SLACK_API_TOKEN",None)
   celery_conf: |
     from celery.schedules import crontab
-
+    
+    
     class CeleryConfig(object):
       broker_url = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
       imports = ('superset.sql_lab', "superset.tasks", "superset.tasks.thumbnails", )
@@ -193,8 +201,10 @@ configOverrides:
     CELERY_CONFIG = CeleryConfig
   reports: |
     EMAIL_PAGE_RENDER_WAIT = 60
-    WEBDRIVER_BASEURL = "http://{{ template "superset.fullname" . }}:{{ .Values.service.port }}/"
-    WEBDRIVER_BASEURL_USER_FRIENDLY = "https://www.example.com/"
+    #WEBDRIVER_BASEURL = "http://{{ template "superset.fullname" . }}:{{ .Values.service.port }}/"
+    WEBDRIVER_BASEURL = "http://superset.multi-account-dashboard.com:{{ .Values.service.port }}"
+    WEBDRIVER_BASEURL_USER_FRIENDLY = "http://www.example.com"
+    # WEBDRIVER_BASEURL_USER_FRIENDLY = "http://superset.multi-account-dashboard.com:{{ .Values.service.port }}"
     WEBDRIVER_TYPE= "chrome"
     WEBDRIVER_OPTION_ARGS = [
         "--force-device-scale-factor=2.0",
@@ -427,7 +437,7 @@ supersetWorker:
       apt update
       wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
       apt install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb
-      wget https://chromedriver.storage.googleapis.com/88.0.4324.96/chromedriver_linux64.zip
+      wget https://chromedriver.storage.googleapis.com/111.0.5563.146/chromedriver_linux64.zip
       unzip chromedriver_linux64.zip
       chmod +x chromedriver
       mv chromedriver /usr/bin

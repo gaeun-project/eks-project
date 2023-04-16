@@ -5,7 +5,7 @@ kind: ServiceAccount
 automountServiceAccountToken: true
 metadata:
   name: superset-redis
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -17,7 +17,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: superset-postgresql
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-12.1.6
@@ -25,7 +25,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
 type: Opaque
 data:
-  postgres-password: "WVVPZnRNR20zQw=="
+  postgres-password: "QWxQVnp5bFE4Rg=="
   password: "c3VwZXJzZXQ="
   # We don't auto-generate LDAP password when it's not provided as we do for other passwords
 ---
@@ -55,7 +55,7 @@ metadata:
     chart: superset-0.8.7
     release: "superset"
     heritage: "Helm"
-  namespace: default
+  namespace: superset
 type: Opaque
 stringData:
     REDIS_HOST: "superset-redis-headless"
@@ -65,6 +65,7 @@ stringData:
     DB_USER: "superset"
     DB_PASS: "superset"
     DB_NAME: "superset"
+    SLACK_API_TOKEN: "xoxb-4571693969715-4974017715571-Fe2QaKtuzjGmtvEKCmPLTTel"
 ---
 # Source: superset/templates/secret-superset-config.yaml
 #
@@ -92,7 +93,7 @@ metadata:
     chart: superset-0.8.7
     release: "superset"
     heritage: "Helm"
-  namespace: default
+  namespace: superset
 type: Opaque
 stringData:
   superset_config.py: |
@@ -133,6 +134,86 @@ stringData:
     )
     
     
+    # Overrides
+    # celery_conf
+    from superset_config import *
+    from celery.schedules import crontab
+    from cachelib import RedisCache
+    from superset.typing import CacheConfig
+    import os
+    
+    class CeleryConfig(object):
+      broker_url = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
+      imports = ('superset.sql_lab', "superset.tasks", "superset.tasks.thumbnails", )
+      result_backend = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
+      task_annotations = {
+          'sql_lab.get_sql_results': {
+              'rate_limit': '100/s',
+          },
+          'email_reports.send': {
+              'rate_limit': '1/s',
+              'time_limit': 600,
+              'soft_time_limit': 600,
+              'ignore_result': True,
+          },
+      }
+      beat_schedule = {
+          'reports.scheduler': {
+              'task': 'reports.scheduler',
+              'schedule': crontab(minute='*', hour='*'),
+          },
+          'reports.prune_log': {
+              'task': 'reports.prune_log',
+              'schedule': crontab(minute=0, hour=0),
+          },
+          'cache-warmup-hourly': {
+              'task': 'cache-warmup',
+              'schedule': crontab(minute='*/30', hour='*'),
+              'kwargs': {
+                  'strategy_name': 'top_n_dashboards',
+                  'top_n': 10,
+                  'since': '7 days ago',
+              },
+          }
+      }
+    
+    CELERY_CONFIG = CeleryConfig
+    
+    # feature_flags
+    import ast
+    
+    FEATURE_FLAGS = {
+        "ALERT_REPORTS": True
+    }
+    
+    SMTP_HOST = os.getenv("SMTP_HOST","localhost")
+    SMTP_STARTTLS = ast.literal_eval(os.getenv("SMTP_STARTTLS", "True"))
+    SMTP_SSL = ast.literal_eval(os.getenv("SMTP_SSL", "False"))
+    SMTP_USER = os.getenv("SMTP_USER","superset")
+    SMTP_PORT = os.getenv("SMTP_PORT",25)
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD","superset")
+    SMTP_MAIL_FROM = os.getenv("SMTP_MAIL_FROM","superset@superset.com")
+    
+    SLACK_API_TOKEN = os.getenv("SLACK_API_TOKEN",None)
+    
+    # reports
+    EMAIL_PAGE_RENDER_WAIT = 60
+    # WEBDRIVER_BASEURL = "http://superset:8088/"
+    WEBDRIVER_BASEURL = "http://superset.multi-account-dashboard.com/:8088/"
+    WEBDRIVER_BASEURL_USER_FRIENDLY = "http://superset.multi-account-dashboard.com"
+    WEBDRIVER_TYPE= "chrome"
+    WEBDRIVER_OPTION_ARGS = [
+        "--force-device-scale-factor=2.0",
+        "--high-dpi-support=2.0",
+        "--headless",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+        # This is required because our process runs as root (in order to install pip packages)
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-extensions",
+    ]
+    
     
   superset_init.sh: |
     #!/bin/sh
@@ -162,15 +243,18 @@ stringData:
       psycopg2-binary==2.9.1 \
       redis==3.5.3 \
       PyAthenaJDBC>1.0.9 \
+      elasticsearch-dbapi \
+      Authlib \
+      webdriver-manager \
       PyAthena>1.2.0 &&\
-    if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid 0" > ~/bootstrap; fi
+    if [ ! -f ~/bootstrap åå]; then echo "Running Superset with uid 0" > ~/bootstrap; fi
 ---
 # Source: superset/charts/redis/templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: superset-redis-configuration
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -202,7 +286,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: superset-redis-health
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -309,7 +393,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: superset-redis-scripts
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -337,7 +421,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: superset-postgresql-hl
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-12.1.6
@@ -370,7 +454,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: superset-postgresql
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-12.1.6
@@ -396,7 +480,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: superset-redis-headless
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -420,7 +504,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: superset-redis-master
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -467,7 +551,7 @@ metadata:
     chart: superset-0.8.7
     release: superset
     heritage: Helm
-  namespace: default
+  namespace: superset
 spec:
   type: ClusterIP
   ports:
@@ -478,6 +562,91 @@ spec:
   selector:
     app: superset
     release: superset
+---
+# Source: superset/templates/deployment-beat.yaml
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: superset-celerybeat
+  labels:
+    app: superset-celerybeat
+    chart: superset-0.8.7
+    release: superset
+    heritage: Helm
+  namespace: superset
+spec:
+  # This must be a singleton
+  replicas: 1
+  selector:
+    matchLabels:
+      app: superset-celerybeat
+      release: superset
+  template:
+    metadata:
+      annotations:
+        checksum/superset_config.py: 1eed024385e0457582d097af024b55deb8ef27197eb46047174056c360b3e134
+        checksum/connections: a91716d6d1088e870fbe02159dc0b066dd011885aa08a22fbe60ea1cd4720f82
+        checksum/extraConfigs: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        checksum/extraSecrets: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        checksum/extraSecretEnv: 06188d776e806b26fd2c1f6e7e1446087b47876f19860a8f93750f9bcb515757
+        checksum/configOverrides: b64da70d7220f70c7392abed99cf32e36044692a02ed618f6e7685159826cb35
+        checksum/configOverridesFiles: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        
+      labels:
+        app: "superset-celerybeat"
+        release: superset
+    spec:
+      securityContext:
+        runAsUser: 0
+      initContainers:
+      - command:
+        - /bin/sh
+        - -c
+        - dockerize -wait "tcp://$DB_HOST:$DB_PORT" -wait "tcp://$REDIS_HOST:$REDIS_PORT"
+          -timeout 120s
+        envFrom:
+        - secretRef:
+            name: 'superset-env'
+        image: 'jwilder/dockerize:latest'
+        imagePullPolicy: 'IfNotPresent'
+        name: wait-for-postgres-redis
+      containers:
+        - name: "superset-celerybeat"
+          image: "apache/superset:2.0.1"
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh","-c",". /app/pythonpath/superset_bootstrap.sh; celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedule"]
+          env:
+            - name: "SUPERSET_PORT"
+              value: "8088"
+          envFrom:
+            - secretRef:
+                name: "superset-env"
+          volumeMounts:
+            - name: superset-config
+              mountPath: "/app/pythonpath"
+              readOnly: true
+          resources:
+            {}
+      volumes:
+        - name: superset-config
+          secret:
+            secretName: superset-config
 ---
 # Source: superset/templates/deployment-worker.yaml
 #
@@ -505,7 +674,7 @@ metadata:
     chart: superset-0.8.7
     release: superset
     heritage: Helm
-  namespace: default
+  namespace: superset
 spec:
   replicas: 1
   selector:
@@ -515,12 +684,12 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/superset_config.py: 441901105d53c640c7612da3d7b751dc6f770c1796e733ee79c9322d27cd1b5d
+        checksum/superset_config.py: 1eed024385e0457582d097af024b55deb8ef27197eb46047174056c360b3e134
         checksum/connections: a91716d6d1088e870fbe02159dc0b066dd011885aa08a22fbe60ea1cd4720f82
         checksum/extraConfigs: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
         checksum/extraSecrets: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
-        checksum/extraSecretEnv: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
-        checksum/configOverrides: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        checksum/extraSecretEnv: 06188d776e806b26fd2c1f6e7e1446087b47876f19860a8f93750f9bcb515757
+        checksum/configOverrides: b64da70d7220f70c7392abed99cf32e36044692a02ed618f6e7685159826cb35
         checksum/configOverridesFiles: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
         
       labels:
@@ -545,7 +714,7 @@ spec:
         - name: superset
           image: "apache/superset:2.0.1"
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh","-c",". /app/pythonpath/superset_bootstrap.sh; celery --app=superset.tasks.celery_app:app worker"]
+          command: ["/bin/sh","-c","# Install chrome webdriver\n# See https://github.com/apache/superset/blob/4fa3b6c7185629b87c27fc2c0e5435d458f7b73d/docs/src/pages/docs/installation/email_reports.mdx\napt update\nwget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb\napt install -y --no-install-recommends ./google-chrome-stable_current_amd64.deb\nwget https://chromedriver.storage.googleapis.com/111.0.5563.146/chromedriver_linux64.zip\nunzip chromedriver_linux64.zip\nchmod +x chromedriver\nmv chromedriver /usr/bin\napt autoremove -yqq --purge\napt clean\nrm -f google-chrome-stable_current_amd64.deb chromedriver_linux64.zip\n\n. /app/pythonpath/superset_bootstrap.sh; celery --app=superset.tasks.celery_app:app worker\n"]
           env:
             - name: "SUPERSET_PORT"
               value: "8088"
@@ -600,7 +769,7 @@ metadata:
     chart: superset-0.8.7
     release: superset
     heritage: Helm
-  namespace: default
+  namespace: superset
 spec:
   replicas: 1
   selector:
@@ -611,14 +780,14 @@ spec:
     metadata:
       annotations:
         # Force reload on config changes
-        checksum/superset_config.py: 441901105d53c640c7612da3d7b751dc6f770c1796e733ee79c9322d27cd1b5d
+        checksum/superset_config.py: 1eed024385e0457582d097af024b55deb8ef27197eb46047174056c360b3e134
         checksum/superset_init.sh: e6b1e8eac1f7a79a07a6c72a0e2ee6e09654eeb439c6bbe61bfd676917c41e02
-        checksum/superset_bootstrap.sh: 5860a8516274a14d2f0f57115df4698762518e23f1b2a00cec18aa995943e45a
+        checksum/superset_bootstrap.sh: ab70334da93b001187827d9a2d53095849988d29bc0a8a08e3df822a674af835
         checksum/connections: a91716d6d1088e870fbe02159dc0b066dd011885aa08a22fbe60ea1cd4720f82
         checksum/extraConfigs: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
         checksum/extraSecrets: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
-        checksum/extraSecretEnv: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
-        checksum/configOverrides: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
+        checksum/extraSecretEnv: 06188d776e806b26fd2c1f6e7e1446087b47876f19860a8f93750f9bcb515757
+        checksum/configOverrides: b64da70d7220f70c7392abed99cf32e36044692a02ed618f6e7685159826cb35
         checksum/configOverridesFiles: 44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a
       labels:
         app: superset
@@ -696,7 +865,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: superset-postgresql
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: postgresql
     helm.sh/chart: postgresql-12.1.6
@@ -859,7 +1028,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: superset-redis-master
-  namespace: "default"
+  namespace: "superset"
   labels:
     app.kubernetes.io/name: redis
     helm.sh/chart: redis-17.3.17
@@ -885,9 +1054,9 @@ spec:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: master
       annotations:
-        checksum/configmap: d4f79c4e9ec6c1e8adcc10e819ae60788eeafbb3642d296d1c8ac3edfec51fd1
-        checksum/health: 9d7b9847ade6dfae62b87b0aed98e58cbbebcb0b2654d21174f8e2352c3831fc
-        checksum/scripts: 54ecadff798bde3c391c51a1cf242b2e2c6b99c7cad0b9d11696b233600e0178
+        checksum/configmap: edd4cdc5daa36ee0ccc12ebc1794f4052afcf526f079fb717f305331036ea648
+        checksum/health: 5e60cd06b24da928dcc394d2a676636ba6586708ede17b13c5a6141fe63b75a2
+        checksum/scripts: f9cd71d84b51921526a8495dd182fcb71a84b867d61d65b45b91cb921667e2a4
         checksum/secret: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
     spec:
       
@@ -1025,11 +1194,11 @@ metadata:
       "StatusCode": "HTTP_301"}}'
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:750876142122:certificate/e0aa168a-65d1-408f-9e98-c83623d5a408
     alb.ingress.kubernetes.io/inbound-cidr: 0.0.0.0/0
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     kubernetes.io/ingress.class: alb
-  namespace: default
+  namespace: superset
 spec:
   rules:
     - host: superset.multi-account-dashboard.com
@@ -1142,7 +1311,7 @@ metadata:
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": "before-hook-creation"
-  namespace: default
+  namespace: superset
 spec:
   template:
     metadata:

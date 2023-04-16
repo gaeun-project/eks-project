@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: aws-resource-get-tag-cronjob
+  namespace: cronjob
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName : cronjob-test-sa
+          containers:
+          - name: aws-resource-get-tag
+            image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/aws-resource-tag-slack:latest
+            imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure

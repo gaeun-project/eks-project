@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: vault-injector-test
+  name: vault-injector-test
+  namespace: vault-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vault-injector-test
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-init-first: "true"
+        # vault.hashicorp.com/agent-inject-secret-test: secret/data/test
+        vault.hashicorp.com/role: internal-app
+      labels:
+        app: vault-injector-test
+    spec:
+      serviceAccountName: vault-secret-read2
+      containers:
+      - image: nginx
+        name: vault-injector-test
