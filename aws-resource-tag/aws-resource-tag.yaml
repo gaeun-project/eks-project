@@ -9,7 +9,7 @@ spec:
     spec:
       template:
         spec:
-          serviceAccountName : cronjob-test-sa
+          serviceAccountName : cronjob-sa
           containers:
           - name: aws-resource-get-tag
             image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/aws-resource-tag-slack:latest

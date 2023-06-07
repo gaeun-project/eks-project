@@ -82,9 +82,9 @@ module "eks" {
   eks_managed_node_groups = {
 
     study-dev-spot-a = {
-      min_size     = 2
+      min_size     = 1
       max_size     = 10
-      desired_size = 2
+      desired_size = 1
 
       instance_types = ["t3.medium"]
       capacity_type  = "SPOT"
