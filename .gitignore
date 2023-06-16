@@ -18,3 +18,4 @@ output_elasticsearch.yaml
 output_dashboard.yaml
 output_redash.yaml
 my-value-superset.yaml
+cronjob/describe_resource_test_configmap.yaml

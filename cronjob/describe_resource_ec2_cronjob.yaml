@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: describe-resource-ec2-cronjob
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName : cronjob-sa
+          containers:
+          - name: describe-ec2-resource
+            image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:8c670c35dec413cd4f51e8c3d963663cd2b2980e
+            imagePullPolicy: IfNotPresent
+            envFrom:
+            - configMapRef:
+                name: parameter
+          restartPolicy: OnFailure

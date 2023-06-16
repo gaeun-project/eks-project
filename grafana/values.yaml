@@ -715,8 +715,10 @@ grafana.ini:
     url: https://grafana.net
   server:
     domain: "{{ if (and .Values.ingress.enabled .Values.ingress.hosts) }}{{ .Values.ingress.hosts | first }}{{ else }}''{{ end }}"
-  default:
-    theme: light
+  # unified_alerting:
+  #   enabled: false
+  # default:
+  #   theme: light
   
 ## grafana Authentication can be enabled with the following values on grafana.ini
  # server:
@@ -740,6 +742,28 @@ grafana.ini:
   #   enabled: true
   #   allow_sign_up: true
   #   config_file: /etc/grafana/ldap.toml
+mimir:
+  structuredConfig:
+    blocks_storage:
+      bucket_store:
+        chunks_cache:
+          backend: redis
+          redis:
+            endpoint: test-redis.zzv8dh.clustercfg.apn2.cache.amazonaws.com:6379
+        index_cache:
+          backend: redis
+          redis:
+            endpoint: test-redis.zzv8dh.clustercfg.apn2.cache.amazonaws.com:6379
+        metadata_cache:
+          backend: redis
+          redis:
+            endpoint: test-redis.zzv8dh.clustercfg.apn2.cache.amazonaws.com:6379
+    frontend:
+      cache_results: true
+      results_cache:
+        backend: redis
+        redis:
+          endpoint: test-redis.zzv8dh.clustercfg.apn2.cache.amazonaws.com:6379
 
 ## Grafana's LDAP configuration
 ## Templated by the template in _helpers.tpl
