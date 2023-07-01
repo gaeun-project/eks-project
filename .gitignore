@@ -27,6 +27,9 @@ docker/cronjob_eks.py
 export_env_value.sh
 features/bot/**
 features/bot/slack/**
+features/bot/slack/slack_thread_bot.py
+features/bot/slack/slack.py
+
 
 custodian/output/
 .github/workflows/aws_change_resource_tag.yaml
