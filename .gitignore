@@ -19,3 +19,16 @@ output_dashboard.yaml
 output_redash.yaml
 my-value-superset.yaml
 cronjob/describe_resource_test_configmap.yaml
+
+*.txt
+*.json
+docker/cronjob_eks.py
+*.xlsx
+export_env_value.sh
+features/bot/**
+features/bot/slack/**
+
+custodian/output/
+.github/workflows/aws_change_resource_tag.yaml
+.github/workflows/ec2-describe-to-s3.yaml
+temp/

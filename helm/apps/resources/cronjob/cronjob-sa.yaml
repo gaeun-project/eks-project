@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cronjob-sa
+  namespace: cronjob
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::750876142122:role/aws-cronjob-sa

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: parameter
+  namespace: cronjob
+data:
+  PARAMETER_ACCOUNT: '785964833143'
+  PARAMETER_ROLE: 'AssumableAdminRole'
+  PARAMETER_REGION: 'ap-northeast-2'
+  PARAMETER_SERVICE: 'mad-service'
