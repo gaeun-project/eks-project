@@ -16,4 +16,7 @@ spec:
             envFrom:
             - configMapRef:
                 name: parameter
+            env:
+            - name: PARAMETER_ACCOUNT
+              value: ${{ .Values.PARAMETER_ACCOUNT }}
           restartPolicy: OnFailure
