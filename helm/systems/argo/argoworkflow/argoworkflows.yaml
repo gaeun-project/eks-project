@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: parallel-cronjob-workflow-cron
+  serviceaccount: 
+spec:
+  schedule: "* * * * *" # Set the schedule as per your needs
+  workflowSpec:
+    serviceAccountName: workflows-sa
+    entrypoint: parallel-cronjobs
+    templates:
+    - name: parallel-cronjobs
+      steps:
+      - - name: generate
+          template: get-parameters-and-generate-jobs
+      - - name: run-cronjob
+          template: run-bash-job
+          arguments:
+            parameters:
+            - name: item
+              value: "{{item}}"
+    - name: get-parameters-and-generate-jobs
+      script:
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest # Replace with the docker image you prepared
+    - name: run-bash-job
+      inputs:
+        parameters:
+        - name: item
+      container:
+        containerName: describe-ec2-resource
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:09c4feae6bf97d70dc0c9c5a0709cdeb804f58a9 # replace with your bash image
+        imagePullPolicy: IfNotPresent
+        envFrom:
+          - configMapRef:
+              name: "{{inputs.parameters.item}}"
