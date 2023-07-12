@@ -1,14 +1,16 @@
 #!/bin/bash
 
-# ${PARAMETER_ACCOUNT} is ACCOUNT Number
-# ${PARAMETER_ROLE} is Role Name
-# ${PARAMETER_REGION} is Region
-# ${PARAMETER_SERVICE} i Service
-
-
-ROLE_ARN="arn:aws:iam::${PARAMETER_ACCOUNT}:role/${PARAMETER_ROLE}"
-SESSION_NAME=${PARAMETER_ROLE}
-REGION=${PARAMETER_REGION}
+# ${parameter-account} is ACCOUNT Number
+# ${parameter-role} is Role Name
+# ${parameter-region} is Region
+# ${parameter-service} i Service
+parameter-role
+parameter-region
+parameter-service
+parameter-account
+ROLE_ARN="arn:aws:iam::${parameter-account}:role/${parameter-role}"
+SESSION_NAME=${parameter-role}
+REGION=${parameter-region}
 
 # Role을 가정하고 임시 보안 자격 증명 얻기
 CREDENTIALS=$(aws sts assume-role --role-arn $ROLE_ARN --role-session-name $SESSION_NAME --region $REGION --output json)
@@ -39,5 +41,5 @@ hours=$(date +%H)
 minutes=$(date +%M)
 seconds=$(date +%S)
 
-aws s3 cp instances.json s3://mad-master-bucket/${PARAMETER_SERVICE}/account=${PARAMETER_ACCOUNT}/service=ec2/year=${year}/month=${month}/day=${day}/hours=${hours}/AWS_Info.json
+aws s3 cp instances.json s3://mad-master-bucket/${parameter-service}/account=${parameter-account}/service=ec2/year=${year}/month=${month}/day=${day}/hours=${hours}/AWS_Info.json
 rm output.json instances.json

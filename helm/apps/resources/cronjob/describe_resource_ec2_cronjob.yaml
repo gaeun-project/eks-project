@@ -11,7 +11,7 @@ spec:
           serviceAccountName : cronjob-sa
           containers:
           - name: describe-ec2-resource
-            image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:084cb8380b22f6d3bf16d75e2b1b5e0011ce4afb
+            image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:56662aa342f04f23fd0c1a49cd187c42dcdbc1b6
             imagePullPolicy: IfNotPresent
             envFrom:
             - configMapRef:

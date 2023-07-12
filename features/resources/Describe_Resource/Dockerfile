@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 WORKDIR /home/app
 
-RUN apt-get update \
+RUN apt-get update -y\
     && apt-get install -y \
         curl \
         unzip \
@@ -16,7 +16,7 @@ RUN apt-get update \
 
 RUN pip3 install awscli --upgrade
 
-COPY ./Describe_Resource/Describe_Resource.sh .
+COPY ./features/resources/Describe_Resource/Describe_Resource.sh .
 
 RUN chmod +x ./Describe_Resource.sh
 
