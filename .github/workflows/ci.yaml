@@ -6,7 +6,7 @@ permissions:
 on: 
   push:
     branches:
-      - ci # main
+      - main # main
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: describe-ec2-resource	

@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: parallel-cronjob-workflow-cron
+spec:
+  schedule: "* * * * *"
+  workflowSpec:
+    serviceAccountName: workflows-sa
+    entrypoint: parallel-with-param
+    arguments:
+      parameters:
+      - name: items
+        value: '[{"account": "785964833143", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}, {"account": "595367679687", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}]'
+    templates:
+    - name: parallel-with-param
+      inputs:
+        parameters:
+        - name: items
+      steps:
+      - - name: echo-item
+          template: whalesay
+          arguments:
+            parameters:
+            - name: account
+              value: "{{item.account}}"
+            - name: service
+              value: "{{item.service}}"
+            - name: region
+              value: "{{item.region}}"
+            - name: role
+              value: "{{item.role}}"
+          withParam: "{{inputs.parameters.items}}"
+      - - name: generate
+          template: get-parameters-and-generate-jobs
+    - name: get-parameters-and-generate-jobs
+      script:
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest # Replace with the docker image you prepared
+    - name: whalesay
+      inputs:
+        parameters:
+        - name: account
+        - name: service
+        - name: region
+        - name: role
+      container:
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:ff1ad6e21d2a87897886c7caee52a2a64b966124 # replace with your bash image
+        command: [sh, -c]
+        args: ["account={{inputs.parameters.account}} service={{inputs.parameters.service}} region={{inputs.parameters.region}} role={{inputs.parameters.role}}; sh Describe_Resource.sh"]
