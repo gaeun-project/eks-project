@@ -7,10 +7,6 @@ terraform {
     dynamodb_table = "terraform-lock"
   }
 }
-provider "aws" {
-  region  = "ap-northeast-2"
-  profile = "gaeun-dev"
-}
 
 provider "aws" {
   region  = "ap-northeast-2"

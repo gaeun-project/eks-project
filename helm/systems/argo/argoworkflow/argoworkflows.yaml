@@ -3,33 +3,53 @@ kind: CronWorkflow
 metadata:
   name: parallel-cronjob-workflow-cron
 spec:
-  schedule: "* * * * *" # Set the schedule as per your needs
+  schedule: "* * * * *"
   workflowSpec:
     serviceAccountName: workflows-sa
-    entrypoint: parallel-cronjobs
+    entrypoint: parallel-with-param
     templates:
-    - name: parallel-cronjobs
+    - name: parallel-with-param
       steps:
       - - name: generate
           template: get-parameters-and-generate-jobs
-      - - name: run-cronjob
-          template: run-bash-job
+      - - name: parallel-workflow
+          template: parallel-workflow
           arguments:
             parameters:
-            - name: item
-              value: "{{item}}"
+            - name: account
+              value: "{{item.account}}"
+            - name: service
+              value: "{{item.service}}"
+            - name: region
+              value: "{{item.region}}"
+            - name: role
+              value: "{{item.role}}"
           withParam: "{{steps.generate.outputs.result}}"
+      - - name: trigger-glue-crawler
+          template: aws-cli
+          arguments:
+            parameters:
+            - name: command
+              value: "aws glue start-crawler --name ec2_metadata_crawlers"
     - name: get-parameters-and-generate-jobs
       script:
         image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest # Replace with the docker image you prepared
-    - name: run-bash-job
+    - name: parallel-workflow
       inputs:
         parameters:
-        - name: item
+        - name: account
+        - name: service
+        - name: region
+        - name: role
       container:
-        containerName: describe-ec2-resource
-        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:56662aa342f04f23fd0c1a49cd187c42dcdbc1b6 # replace with your bash image
-        imagePullPolicy: IfNotPresent
-        envFrom:
-          - configMapRef:
-              name: "{{inputs.parameters.item}}"
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:ce48e0475d74f9736eb5476526294ee9615749eb # replace with your bash image
+        command: [sh, -c]
+        args: ["export account={{inputs.parameters.account}}; export service={{inputs.parameters.service}}; export region={{inputs.parameters.region}}; export role={{inputs.parameters.role}}; sh Describe_Resource.sh"]
+    - name: aws-cli
+      inputs:
+        parameters:
+        - name: command
+      container:
+        image: amazon/aws-cli
+        command: ["sh", "-c"]
+        args: ["{{inputs.parameters.command}}"]

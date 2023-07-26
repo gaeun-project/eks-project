@@ -10,7 +10,7 @@ spec:
     arguments:
       parameters:
       - name: items
-        value: '[{"account": "785964833143", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}, {"account": "595367679687", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}]'
+        value: '[{"account": "", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}, {"account": "", "service": "mad-service", "region": "ap-northeast-2", "role": "mad-project"}]' # test json 필요.
     templates:
     - name: parallel-with-param
       inputs:
@@ -43,6 +43,6 @@ spec:
         - name: region
         - name: role
       container:
-        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:ff1ad6e21d2a87897886c7caee52a2a64b966124 # replace with your bash image
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:ce48e0475d74f9736eb5476526294ee9615749eb # replace with your bash image
         command: [sh, -c]
-        args: ["account={{inputs.parameters.account}} service={{inputs.parameters.service}} region={{inputs.parameters.region}} role={{inputs.parameters.role}}; sh Describe_Resource.sh"]
+        args: ["export account={{inputs.parameters.account}}; export service={{inputs.parameters.service}}; export region={{inputs.parameters.region}}; export role={{inputs.parameters.role}}; sh Describe_Resource.sh"]
