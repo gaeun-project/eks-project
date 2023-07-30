@@ -1,0 +1,20 @@
+{
+    "AWS::EC2::Instance": ["aws.ec2", "InstanceId"],
+    "AWS::EC2::EIP": ["aws.elastic-ip", "PublicIp"],
+    "AWS::EC2::NetworkInterface": ["aws.eni", "NetworkInterfaceId"],
+    "AWS::EC2::NatGateway": ["aws.nat-gateway", "NatGatewayId"],
+    "AWS::EC2::SecurityGroup": ["aws.security-group", "GroupId"],
+    "AWS::EC2::TransitGateway": ["aws.transit-gateway", "TransitGatewayId"],
+    "AWS::EC2::Volume": ["aws.ebs", "VolumeId"],
+    "AWS::EFS::FileSystem": ["aws.efs", "FileSystemId"],
+    "AWS::EKS::Cluster": ["aws.eks", "Name"],
+    "AWS::S3::Bucket": ["aws.s3", "Name"],
+    "AWS::EC2::InternetGateway": ["aws.internet-gateway", "InternetGatewayId"],
+    "AWS::EC2::RouteTable": ["aws.route-table", "RouteTableId"],
+    "AWS::EC2::Subnet": ["aws.subnet", "SubnetId"],
+    "AWS::EC2::VPC": ["aws.vpc", "VpcId"],
+    "AWS::Lambda::Function": ["aws.lambda", "FunctionName"],
+    "AWS::ElasticLoadBalancingV2::LoadBalancer": ["aws.app-elb", "LoadBalancerArn"],
+    "AWS::ACM::Certificate": ["aws.acm-certificate", "CertificateArn"],
+    "AWS::RDS::DBInstance": ["aws.rds", "DBInstanceIdentifier"]
+}

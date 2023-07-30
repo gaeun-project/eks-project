@@ -6,11 +6,10 @@ permissions:
 on: 
   push:
     branches:
-      - main2 # main
+      - main # main
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: describe-ec2-resource	
-
+  ECR_REPOSITORY: custodian-repo
 jobs:
   aws_change_resource_tag_job:
     strategy:
@@ -37,13 +36,11 @@ jobs:
       - name: Debug file structure
         run: |
           ls -l
-          ls -l ./features/resources/Describe_Resource
-
 
       - name: Build and Push
         run: |
           ls -l
-          docker build . --file ./features/resources/Describe_Resource/Dockerfile --tag ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          docker build . --file ./features/tagging/custodian/Dockerfile --no-cache --tag ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Push the Docker image
         run: docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}

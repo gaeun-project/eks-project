@@ -15,7 +15,7 @@ provider "aws" {
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
-  name               = "eks-project-vpc-dev"
+  name               = "eks-project-vpc-prd"
   cidr               = "10.0.0.0/16"
   enable_nat_gateway = true
   single_nat_gateway = true
@@ -27,7 +27,7 @@ module "vpc" {
   public_subnet_tags  = { "kubernetes.io/role/elb" = 1 }
 
   tags = {
-    "kubernetes.io/cluster/eks-project-dev" = "shared"
+    "kubernetes.io/cluster/eks-project-prd" = "shared"
     Terraform                             = "true"
     Environment                           = "dev"
     Project                               = "eks-project"

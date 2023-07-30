@@ -1,0 +1,14 @@
+policies:
+  - name: my-first-policy
+    resource: {{ resourcename }}
+    filters:
+      - and:
+        - "tag:Name": present
+        - "{{ resourcetype }}": {{ resourceid }}
+    actions:
+      - type: tag
+        key: project
+        value: {{ project }}
+      - type: tag
+        key: stage
+        value: {{ stage }}

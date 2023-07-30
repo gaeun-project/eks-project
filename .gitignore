@@ -20,8 +20,12 @@ output_redash.yaml
 my-value-superset.yaml
 cronjob/describe_resource_test_configmap.yaml
 
-*.txt
-*.json
+helm/**/*.txt
+systems/**/*.txt
+iac/**/*.json
+features/resources/**/*.json
+features/tagging/cronjob/*.json
+features/tagging/docker_get_resource_tag/*.json
 docker/cronjob_eks.py
 *.xlsx
 export_env_value.sh

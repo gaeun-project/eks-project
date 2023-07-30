@@ -7,6 +7,10 @@ terraform {
     dynamodb_table = "terraform-lock"
   }
 }
+provider "aws" {
+  region  = "ap-northeast-2"
+  profile = "gaeun-dev"
+}
 
 provider "aws" {
   region  = "ap-northeast-2"
@@ -26,7 +30,7 @@ data "terraform_remote_state" "eks" {
 }
 
 locals {
-  name = "eks-project-dev"
+  name = "eks-project-prd"
   tags = {
     Name        = local.name
     Environment = "dev"

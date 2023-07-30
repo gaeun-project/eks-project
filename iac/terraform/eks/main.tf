@@ -39,7 +39,7 @@ data "terraform_remote_state" "vpc" {
 }
 
 locals {
-  name = "eks-project-dev"
+  name = "eks-project-prd"
   tags = {
     Name        = local.name
     Environment = "dev"
