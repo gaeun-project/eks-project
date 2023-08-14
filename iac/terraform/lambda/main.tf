@@ -12,78 +12,41 @@ provider "aws" {
   profile = "gaeun-dev"
 }
 
-module "iam_policy" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
+data "terraform_remote_state" "iam" {
+  backend = "s3"
 
-  name        = "tagging-feature-policy"
-  path        = "/"
-  description = "for tagging feature"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:*",
-                "ec2:CreateTags",
-                "ec2:DeleteTags",
-                "ec2:DescribeTags"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudtrail:DescribeTrails",
-                "cloudtrail:GetEventSelectors",
-                "cloudtrail:ListPublicKeys",
-                "cloudtrail:LookupEvents",
-                "cloudtrail:GetTrailStatus",
-                "cloudtrail:ListTags"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
+  config = {
+    bucket         = "mad-eks-project-tfstates-dev"
+    region         = "ap-northeast-2"
+    key            = "mad-eks-project-tfstates-dev/eks-project-iam-dev.tfstate"
+    profile        = "gaeun-dev"
+    dynamodb_table = "terraform-lock"
+  }
 }
 
-module "iam_assumable_role" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role"
+variable "image_uri" {
+  description = "The URI of the Docker image in ECR"
+  type        = string
+}
 
-  trusted_role_services = [
-    "lambda.amazonaws.com"
-  ]
 
-  create_role = true
+resource "aws_lambda_function" "lambda" {
+  function_name = "lambda"
 
-  role_name         = "LambdaExecRole-MadProject"
-  role_requires_mfa = false
+  # ECR에 저장된 컨테이너 이미지 URI
+  image_uri = var.image_uri
+  package_type  = "Image"
+  # 이미 정해진 IAM 역할
+  role = data.terraform_remote_state.iam.outputs.role_arn
+
+  # Lambda 함수 실행에 필요한 메모리 크기 (예: 128MB)
+  memory_size = 128
+
+  # Lambda 함수의 타임아웃 (예: 10초)
+  timeout = 60
+
+  # 아키텍처 지정 (예: ARM 또는 x86_64)
+  architectures = ["x86_64"] # 또는 ["x86_64"] 등
 
 }
 
-resource "aws_iam_role_policy_attachment" "attach" {
-  role       = module.iam_assumable_role.iam_role_name
-  policy_arn = module.iam_policy.arn
-}
-
-# module "lambda_function" {
-#   source  = "terraform-aws-modules/lambda/aws"
-#   version = "~> 2.0"
-
-#   function_name = "lambda_function_name"
-#   handler       = "index.handler"
-#   runtime       = "python3.10"
-
-#   source_path = {
-#     path             = "src/"
-#     runtime          = "nodejs14.x"
-#     patterns         = ["**/*"]
-#   }
-
-#   environment_variables = {
-#     foo = "bar"
-#   }
-# }

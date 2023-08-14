@@ -6,7 +6,7 @@ permissions:
 on: 
   push:
     branches:
-      - main # main
+      - main2 # main
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: custodian-repo
@@ -33,9 +33,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Debug file structure
-        run: |
-          ls -l
 
       - name: Build and Push
         run: |

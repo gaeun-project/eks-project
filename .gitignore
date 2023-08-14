@@ -19,7 +19,7 @@ output_dashboard.yaml
 output_redash.yaml
 my-value-superset.yaml
 cronjob/describe_resource_test_configmap.yaml
-
+*.tfvars
 helm/**/*.txt
 systems/**/*.txt
 iac/**/*.json
