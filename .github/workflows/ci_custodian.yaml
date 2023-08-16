@@ -6,39 +6,74 @@ permissions:
 on: 
   push:
     branches:
-      - main2 # main
+      - custodian # main
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: custodian-repo
-jobs:
-  aws_change_resource_tag_job:
-    strategy:
-      max-parallel: 1
-      matrix:
-        environment: ["describe-ec2-resource"]
-    runs-on: ubuntu-22.04
-    environment: ${{ matrix.environment }}
-    steps:
-      - name: Checkout 
-        uses: actions/checkout@v3
+# jobs:
+#   aws_change_resource_tag_job:
+#     strategy:
+#       max-parallel: 1
+#       matrix:
+#         environment: ["describe-ec2-resource"]
+#     runs-on: ubuntu-22.04
+#     environment: ${{ matrix.environment }}
+#     steps:
+#       - name: Checkout 
+#         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v1
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ env.AWS_REGION }}
+
+#       - name: Login-ecr
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v1
+
+
+#       - name: Build and Push
+#         run: |
+#           ls -l
+#           docker build . --file ./features/tagging/custodian/Dockerfile --no-cache --tag ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+#       - name: Push the Docker image
+#         run: docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login-ecr
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-
-      - name: Build and Push
+          aws-region: ap-northeast-2
+      - name: Retrieve items from DynamoDB
+        id: set-matrix
         run: |
-          ls -l
-          docker build . --file ./features/tagging/custodian/Dockerfile --no-cache --tag ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          items=$(aws dynamodb scan --table-name argoworkflows-test --query 'Items.length' --output text)
+          echo "Number of items: $items"
+          echo "::set-output name=matrix::[$(echo $(seq 1 $items | sed 's/ /,/g'))]"
 
-      - name: Push the Docker image
-        run: docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  process:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{fromJson(needs.setup.outputs.matrix)}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Process item
+        run: |
+          echo "Processing item number ${{ matrix.item }}"
+
+
 
