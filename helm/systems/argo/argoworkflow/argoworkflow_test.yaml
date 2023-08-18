@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: parallel-cronjob-workflow-cron-test
+spec:
+  schedule: "* * * * *"
+  workflowSpec:
+    serviceAccountName: workflows-sa
+    entrypoint: parallel-with-param
+    templates:
+    - name: parallel-with-param
+      steps:
+      - - name: generate
+          template: get-parameters-and-generate-jobs
+    - name: get-parameters-and-generate-jobs
+      script:
+        image: python:3.9 # Python 이미지를 사용합니다.
+        command: [python]
+        source: |
+          print("Hello, Argo!")
+      nodeSelector: # nodeSelector 추가
+        KarpenterNode: spot
+      tolerations: # 테인트에 맞는 toleration 추가
+        - key: "karpenter-spot-node"
+          effect: "NoSchedule"
+

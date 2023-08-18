@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-with-toleration-test
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: with-toleration
+  template:
+    metadata:
+      labels:
+        app: with-toleration
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+      tolerations:
+      - key: "taint_karpenter"
+        operator: "Equal"
+        value: "enabled"
+        effect: "NoSchedule"
+      nodeSelector:
+        label_karpenter: "enabled"
