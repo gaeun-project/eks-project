@@ -1,22 +1,19 @@
 terraform {
   backend "s3" {
     region         = "ap-northeast-2"
-    bucket         = "mad-eks-project-tfstates-dev"
-    key            = "mad-eks-project-tfstates-dev/eks-project-custodian-dev.tfstate"
-    profile        = "gaeun-dev"
-    dynamodb_table = "terraform-lock"
+    bucket         = var.s3_bucket
+    key            = var.key
   }
 }
+
 provider "aws" {
   region  = "ap-northeast-2"
-  profile = "gaeun-dev"
+  profile = var.aws_profile
 }
-
 
 
 resource "aws_iam_role" "lambda_role" {
   name = "custodian_role"
-    # 생성할 IAM Role 이름
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -84,7 +81,6 @@ resource "aws_lambda_function" "lambda" {
 
 #   depends_on = [aws_lambda_function.lambda]
 # }
-
 resource "aws_lambda_permission" "allow_config_call" {
   statement_id  = "AllowExecutionFromAWSConfig"
   action        = "lambda:InvokeFunction"
@@ -98,9 +94,7 @@ resource "aws_lambda_permission" "allow_config_call" {
 resource "aws_config_config_rule" "config_rule" {
   name             = "custodian-config-rule"
   description      = "Monitor configuration changes using custom lambda function"
-  scope {
-    compliance_resource_types = ["AWS::AllSupported"]
-  }
+
   source {
     owner             = "CUSTOM_LAMBDA"
     source_identifier = aws_lambda_function.lambda.arn
@@ -111,4 +105,3 @@ resource "aws_config_config_rule" "config_rule" {
     }
   }
 }
-

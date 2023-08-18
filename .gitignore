@@ -4,9 +4,9 @@
 
 **/.terraform.lock.hcl
 
-terraform/eks/values/**
-terraform/vpc/values/**
-terraform/helm/values/**
+iac/terraform/eks/values/**
+iac/terraform/vpc/values/**
+iac/terraform/helm/values/**
 
 *.tfstate
 *.tfstate.*
@@ -19,7 +19,7 @@ output_dashboard.yaml
 output_redash.yaml
 my-value-superset.yaml
 cronjob/describe_resource_test_configmap.yaml
-*.tfvars
+
 helm/**/*.txt
 systems/**/*.txt
 iac/**/*.json
@@ -39,3 +39,6 @@ custodian/output/
 .github/workflows/aws_change_resource_tag.yaml
 .github/workflows/ec2-describe-to-s3.yaml
 temp/
+
+
+iac/terraform/helm/values/*
