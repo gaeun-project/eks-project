@@ -6,18 +6,21 @@ permissions:
 on: 
   push:
     branches:
-      - main2 # main
+      - custodian # main
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: custodian-repo
+
 jobs:
-  aws_change_resource_tag_job:
+  custodian:
     strategy:
       max-parallel: 1
       matrix:
         environment: ["describe-ec2-resource"]
     runs-on: ubuntu-22.04
     environment: ${{ matrix.environment }}
+    outputs:
+      image_url : ${{ steps.get-image-url.outputs.image_url }}
     steps:
       - name: Checkout 
         uses: actions/checkout@v3
@@ -41,4 +44,122 @@ jobs:
 
       - name: Push the Docker image
         run: docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: get-image-url
+        id: get-image-url
+        run: echo "image_url=750876142122.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+
+  setup:
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ["describe-ec2-resource"]
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Retrieve items from DynamoDB
+        id: set-matrix
+        run: |
+          items=$(aws dynamodb scan --table-name argoworkflows-test --query 'Items' --output yaml > items.yaml)
+          cat items.yaml
+
+          
+          length=$(yq e 'length' items.yaml)
+          echo "length : $length"
+          matrix_values="["
+          for i in $(seq 0 $(($length - 1))); do
+            account=$(yq e ".[$i].account.S" items.yaml)
+            bucket=$(yq e ".[$i].bucket.S" items.yaml)
+            region=$(yq e ".[$i].region.S" items.yaml)
+            role=$(yq e ".[$i].role.S" items.yaml)
+            service=$(yq e ".[$i].service.S" items.yaml)
+            profile=$(yq e ".[$i].profile.S" items.yaml)
+            
+            matrix_values="${matrix_values}{\"account\": \"$account\", \"bucket\": \"$bucket\", \"region\": \"$region\", \"role\": \"$role\", \"service\": \"$service\", \"profile\": \"$profile\"},"
+            echo "value test : $account, $bucket, $region, $role, $service, $profile"
+            echo "matrix_values test : $matrix_values"
+          done
+          matrix_values="${matrix_values%?}]"
+          echo "Matrix values: $matrix_values"
+          echo "matrix=$matrix_values" >> $GITHUB_OUTPUT
+
+
+  process:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        item: ${{fromJson(needs.setup.outputs.matrix)}}
+    environment: "describe-ec2-resource"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Process item
+        run: |
+          account=${{ matrix.item.account }}
+          bucket=${{ matrix.item.bucket }}
+          region=${{ matrix.item.region }}
+          role=${{ matrix.item.role }}
+          service=${{ matrix.item.service }}
+          profile=${{ matrix.item.profile }}
+          echo "Processing item: account=$account, bucket=$bucket, region=$region, role=$role, service=$service, profile=$profile"
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: aws sts assumerole
+        run: |
+          aws sts assume-role --role-arn "arn:aws:iam::${{ matrix.item.account }}:role/${{ matrix.item.role }}" --role-session-name ${{ matrix.item.profile }} --region ap-northeast-2 > sts.json
+          access=$(cat sts.json  | yq '.Credentials.AccessKeyId')
+          secret=$(cat sts.json  | yq '.Credentials.SecretAccessKey')
+          sessiontoken=$(cat sts.json  | yq '.Credentials.SessionToken')
+          echo "AWS_ACCESS_KEY_ID=$access" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$secret" >> $GITHUB_ENV
+          echo "AWS_SESSION_TOKEN=$sessiontoken" >> $GITHUB_ENV
+          aws configure set aws_access_key_id $access --profile ${{ matrix.item.profile }}
+          aws configure set aws_secret_access_key $secret --profile ${{ matrix.item.profile }}
+          aws configure set aws_session_token $sessiontoken --profile ${{ matrix.item.profile }}
+          aws sts get-caller-identity --profile ${{ matrix.item.profile }}
+      - name: install terraform
+        uses: hashicorp/setup-terraform@v2
+
+      # - name: Setup SSH access
+      #   uses: mxschmitt/action-tmate@v3
+      
+      - name: tf init
+        run: |
+          cd ${GITHUB_WORKSPACE}/iac/terraform/custodian
+          aws sts get-caller-identity
+          echo terraform init -backend-config="bucket=${{ matrix.item.bucket }}" -backend-config="key=${{ matrix.item.bucket }}/eks-project-custodian-dev.tfstate"
+          terraform init -backend-config="bucket=${{ matrix.item.bucket }}" -backend-config="key=${{ matrix.item.bucket }}/eks-project-custodian-dev.tfstate"
+          aws sts get-caller-identity
+          terraform apply -var="aws_profile=${{ matrix.item.profile }}" -var="s3_bucket=${{ matrix.item.bucket }}" -var="key=${{ matrix.item.bucket }}/eks-project-custodian-dev.tfstate" -auto-approve
+
+      # - name: aws sts get profile
+      #   if: always()
+      #   run: |
+      #     aws sts get-caller-identity
+      #     echo " =============================== "
+      #     aws sts get-caller-identity --profile ${{ matrix.item.profile }}
+      #     aws s3 ls --profile ${{ matrix.item.profile }}
+      # - name: tf apply
+      #   run: |
+      #     cd ${GITHUB_WORKSPACE}/iac/terraform/custodian
+      #     aws sts get-caller-identity
+      #     terraform apply -var="s3_bucket=${{ matrix.item.bucket }}" -var="key=${{ matrix.item.bucket }}/eks-project-custodian-dev.tfstate" -auto-approve
+
 

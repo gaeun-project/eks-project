@@ -74,38 +74,26 @@ module "eks" {
   }
   vpc_id     = local.vpc.vpc_id
   subnet_ids = tolist(local.private_subnets_by_az)
-  # EKS Managed Node Group(s)
-  eks_managed_node_group_defaults = {
-    instance_types = ["t3.medium", "t3.small"]
-  }
 
   eks_managed_node_groups = {
 
-    study-dev-spot-a = {
-      min_size     = 1
-      max_size     = 10
-      desired_size = 1
+    nodegroup_karpenter = {
+      min_size     = 2
+      max_size     = 3
+      desired_size = 2
 
       instance_types = ["t3.medium"]
-      capacity_type  = "SPOT"
-      labels = {
-        Environment = "ONLY_SPOT"
-        GithubRepo  = "eks-project"
-        GithubOrg   = "gaeun-project"
-      }
-    }
-    study-dev-spot-b = {
-      min_size     = 1
-      max_size     = 10
-      desired_size = 1
-
-      instance_types = ["t3.medium"]
-      capacity_type  = "SPOT"
-      labels = {
-        Environment = "ONLY_SPOT"
-        GithubRepo  = "eks-project"
-        GithubOrg   = "gaeun-project"
-      }
+      capacity_type  = "ON_DEMAND"
+      # labels = {
+      #   label_karpenter = "enabled"
+      # }
+      # taints = {
+      #   dedicated = {
+      #     key    = "taint_karpenter"
+      #     value  = "enabled"
+      #     effect = "NO_SCHEDULE"
+      #   }
+      # }
     }
   }
   # aws-auth configmap

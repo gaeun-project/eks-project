@@ -1,0 +1,46 @@
+name: Run Jobs Based on YAML Values
+on: push
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Generate matrix values from YAML
+        id: set-matrix
+        run: |
+          length=$(yq e 'length' test.yaml)
+          matrix_values="["
+          for i in $(seq 0 $(($length - 1))); do
+            account=$(yq e ".[$i].account.S" test.yaml)
+            bucket=$(yq e ".[$i].bucket.S" test.yaml)
+            region=$(yq e ".[$i].region.S" test.yaml)
+            role=$(yq e ".[$i].role.S" test.yaml)
+            service=$(yq e ".[$i].service.S" test.yaml)
+            matrix_values="${matrix_values}{\"account\": \"$account\", \"bucket\": \"$bucket\", \"region\": \"$region\", \"role\": \"$role\", \"service\": \"$service\"},"
+          done
+          matrix_values="${matrix_values%?}]"
+          echo "Matrix values: $matrix_values"
+          echo "matrix=$matrix_values" >> $GITHUB_OUTPUT
+
+  process:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config: ${{fromJson(needs.setup.outputs.matrix)}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Process item
+        run: |
+          account=${{ matrix.config.account }}
+          bucket=${{ matrix.config.bucket }}
+          region=${{ matrix.config.region }}
+          role=${{ matrix.config.role }}
+          service=${{ matrix.config.service }}
+          echo "Processing item: account=$account, bucket=$bucket, region=$region, role=$role, service=$service"
+

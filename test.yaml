@@ -1,0 +1,24 @@
+- account:
+    S: '785964833143'
+  bucket:
+    S: custodian-bucket-785964833143
+  profile:
+    S: service-project
+  region:
+    S: ap-northeast-2
+  role:
+    S: AssumableAdminRole
+  service:
+    S: mad-service
+- account:
+    S: '595367679687'
+  bucket:
+    S: custodian-bucket-595367679687
+  profile:
+    S: mad-project
+  region:
+    S: ap-northeast-2
+  role:
+    S: AssumableAdminRole
+  service:
+    S: mad-service
