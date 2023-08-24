@@ -20,7 +20,20 @@ releases:
     version: 6.52.8
     values:
       - ./grafana/values.yaml
-
-
-
+  - name: argoworkflow
+    namespace: argo
+    createNamespace: true
+    chart: argo/argo-workflows
+    version: 0.33.0
+    values:
+      - ./argo/values.yaml
+    hooks:
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/token.yaml -n argo
+          - kubectl apply -f ./argo/argoworkflow/role.yaml -n argo
+          - kubectl apply -f ./argo/argoworkflow/argoworkflows.yaml -n argo
 
