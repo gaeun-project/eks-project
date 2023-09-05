@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deployment-with-toleration-test
+  name: deloyment-with-toleration-test
 spec:
-  replicas: 10
+  replicas: 2
   selector:
     matchLabels:
       app: with-toleration
@@ -16,9 +16,12 @@ spec:
       - name: nginx
         image: nginx
       tolerations:
-      - key: "taint_karpenter"
-        operator: "Equal"
-        value: "enabled"
+      - key: "karpenter-spot-node"
+        # operator: "Equal"
+        # value: "enabled"
+        effect: "NoSchedule"
+      - key: "node.kubernetes.io/memory-pressure"
+        operator: "Exists"
         effect: "NoSchedule"
       nodeSelector:
-        label_karpenter: "enabled"
+        KarpenterNode: "spot"

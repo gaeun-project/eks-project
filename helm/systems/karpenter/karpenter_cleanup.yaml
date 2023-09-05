@@ -1,0 +1,101 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenter-spot
+spec:
+  providerRef:
+    name: default
+  labels:
+    KarpenterNode: spot # 레이블 추가
+  taints:
+    - key: "karpenter-spot-node" # 테인트 추가
+      effect: "NoSchedule"
+    # - key: "node.kubernetes.io/memory-pressure"
+    #   operator: "Exists"
+    #   effect: "NoSchedule"
+  requirements:
+    - key: "karpenter.k8s.aws/instance-category"
+      operator: In
+      values: ["c", "m", "r"]
+    # - key: node.kubernetes.io/instance-type
+    #   operator: In
+    #   values: ["t3.large", "t3.xlarge"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["4", "8", "16", "32"]
+    # - key: "karpenter.k8s.aws/instance-hypervisor"
+    #   operator: In
+    #   values: ["nitro"]
+    - key: "karpenter.k8s.aws/instance-generation"
+      operator: Gt
+      values: ["2"]
+    - key: "kubernetes.io/arch"
+      operator: In
+      values: ["amd64"]
+    - key: "karpenter.sh/capacity-type" 
+      operator: In
+      values: ["spot"]
+  limits:
+    resources:
+      cpu: "100"
+      memory: 100Gi
+  consolidation:
+    enabled: true
+---
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: karpenter-ondemand
+spec:
+  providerRef:
+    name: default
+  # labels:
+  #   KarpenterNode: spot # 레이블 추가
+  # taints:
+  #   - key: "karpenter-spot-node" # 테인트 추가
+  #     effect: "NoSchedule"
+  #   # - key: "node.kubernetes.io/memory-pressure"
+  #   #   operator: "Exists"
+  #   #   effect: "NoSchedule"
+  requirements:
+    - key: "karpenter.k8s.aws/instance-category"
+      operator: In
+      values: ["c", "m", "r"]
+    # - key: node.kubernetes.io/instance-type
+    #   operator: In
+    #   values: ["t3.large", "t3.xlarge"]
+    # - key: "karpenter.k8s.aws/instance-cpu"
+    #   operator: In
+    #   values: ["4", "8", "16", "32"]
+    # - key: "karpenter.k8s.aws/instance-hypervisor"
+    #   operator: In
+    #   values: ["nitro"]
+    - key: "karpenter.k8s.aws/instance-generation"
+      operator: Gt
+      values: ["2"]
+    - key: "kubernetes.io/arch"
+      operator: In
+      values: ["amd64"]
+    - key: "karpenter.sh/capacity-type" 
+      operator: In
+      values: ["on-demand"]
+  limits:
+    resources:
+      cpu: "100"
+      memory: 100Gi
+  consolidation:
+    enabled: true
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: default
+spec:
+  # subnetSelector:
+  #   aws-ids: ["subnet-078a50f0c4dde1695","subnet-097da12541cec5816","subnet-0cb6a0ddfebac6cd7"]
+  subnetSelector:
+    karpenter.sh/discovery: eks-project-prd
+  # securityGroupSelector:
+  #   karpenter.sh/discovery: eks-project-prd
+  securityGroupSelector:
+    # aws-ids: 

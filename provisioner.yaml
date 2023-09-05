@@ -5,11 +5,11 @@ metadata:
 spec:
   providerRef:
     name: default
-  labels:
-    KarpenterNode: spot # 레이블 추가
-  taints:
-    - key: "karpenter-spot-node" # 테인트 추가
-      effect: "NoSchedule"
+  # labels:
+  #   KarpenterNode: spot # 레이블 추가
+  # taints:
+  #   - key: "karpenter-spot-node" # 테인트 추가
+  #     effect: "NoSchedule"
   requirements:
     - key: "karpenter.k8s.aws/instance-category"
       operator: In
@@ -28,10 +28,10 @@ spec:
       values: ["amd64"]
     - key: "karpenter.sh/capacity-type" 
       operator: In
-      values: ["spot"]
-  limits:
-    resources:
-      cpu: "1000"
-      memory: 1000Gi
+      values: ["spot", "on-demand"]
+  # limits:
+  #   resources:
+  #     cpu: "1"
+  #     memory: 1Gi
   consolidation:
     enabled: true

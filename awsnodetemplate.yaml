@@ -6,4 +6,4 @@ spec:
   subnetSelector:
     karpenter.sh/discovery: eks-project-prd
   securityGroupSelector:
-    aws-ids: "sg-0532a7f66a6c03e3e"
+    aws-ids: "sg-00c81b86013f93ca4"

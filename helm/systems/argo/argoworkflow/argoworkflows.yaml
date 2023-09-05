@@ -3,7 +3,7 @@ kind: CronWorkflow
 metadata:
   name: parallel-cronjob-workflow-cron
 spec:
-  schedule: "* * * * *"
+  schedule: "*/10 * * * *"
   workflowSpec:
     serviceAccountName: workflows-sa
     entrypoint: parallel-with-param

@@ -25,6 +25,10 @@ data "terraform_remote_state" "eks" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
+
+
 locals {
   name = "eks-project-prd"
   tags = {
@@ -37,21 +41,39 @@ locals {
   eks              = data.terraform_remote_state.eks.outputs.eks
   provider_url     = local.eks.oidc_provider
   eks_cluster_name = local.eks.cluster_name
+  account_id = data.aws_caller_identity.current.account_id
 }
 
 module "iam_service_account" {
   source = "git@github.com:gaeun-project/modules.git//terraform/iam/serviceaccount?ref=main"
+  create_role                 = true
 
-  for_each = {
-    argo-workflow = "argo:workflows-sa"
+  # 여기 고쳐야함...account_id가 자동으로 매핑되도록
+  account_id = local.account_id
+  iam_service = {
+    "argo-workflow" = "argo:workflows-sa"
+    "KarpenterControllerRole" = "karpenter:karpenter"
   }
-  name                        = each.key
-  namespace                   = each.value
+  # name                        = ""
+  # namespace                   = ""
   provider_url                = local.provider_url
   eks_cluster_name            = local.eks_cluster_name
   output_eks                  = local.eks
   profile                     = local.profile
 
 }
+
+module "iam-assumable-role" {
+source = "git@github.com:gaeun-project/modules.git//terraform/iam/role?ref=main"
+create_role                  = true
+name                        = "KarpenterNodeRole"
+provider_url                = local.provider_url
+eks_cluster_name            = local.eks_cluster_name
+output_eks                  = local.eks
+profile                     = local.profile
+
+
+}
+
 
 
