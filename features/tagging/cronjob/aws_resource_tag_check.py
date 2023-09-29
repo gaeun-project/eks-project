@@ -340,7 +340,7 @@ def send_slack_message(spreadsheet_url, slack_token, channel):
                             "name": "trigger_button_agree",
                             "text": "담당자 확인⭕️",
                             "type": "button",
-                            "value": json.dumps({"action": "trigger_agree", "param":{spreadsheet_url}})
+                            "value": json.dumps({"action": "trigger_agree", "param": spreadsheet_url})
                         },
                         {   "name": "trigger_button_disagree",
                             "text": "무시하기❌",

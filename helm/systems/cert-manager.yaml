@@ -1,12 +1,12 @@
 
 # repo external-dns와 aws_loadbalancer_controller의 경우는 terraform으로 배포 기본적으로 있어야 하는 것들이라서 terraform으로 배포할 때 같이 배포.
 repositories:
-# - name: grafana
-#   url: https://grafana.github.io/helm-charts
+- name: grafana
+  url: https://grafana.github.io/helm-charts
 # - name: hashicorp
 #   url: https://helm.releases.hashicorp.com  
-# - name: argo
-#   url: https://argoproj.github.io/argo-helm
+- name: argo
+  url: https://argoproj.github.io/argo-helm
 # - name: aws-ebs-csi-driver
 #   url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
 - name: karpenter
@@ -14,39 +14,6 @@ repositories:
   oci: true
 
 releases:
-  # - name: grafana
-  #   namespace: grafana
-  #   createNamespace: true
-  #   chart: grafana/grafana
-  #   version: 6.52.8
-  #   values:
-  #     - ./grafana/values.yaml
-  # - name: argoworkflow
-  #   namespace: argo
-  #   createNamespace: true
-  #   chart: argo/argo-workflows
-  #   version: 0.33.0
-  #   values:
-  #     - ./argo/values.yaml
-  #   hooks:
-  #     - events: ["cleanup"]
-  #       showlogs: true
-  #       command: "/bin/sh"
-  #       args:
-  #         - -c
-  #         - kubectl apply -f ./argo/token.yaml -n argo
-  #     - events: ["cleanup"]
-  #       showlogs: true
-  #       command: "/bin/sh"
-  #       args:
-  #         - -c
-  #         - kubectl apply -f ./argo/argoworkflow/role.yaml -n argo
-  #     - events: ["cleanup"]
-  #       showlogs: true
-  #       command: "/bin/sh"
-  #       args:
-  #         - -c
-  #         - kubectl apply -f ./argo/argoworkflow/argoworkflows.yaml -n argo
   - name: karpenter
     namespace: karpenter
     createNamespace: true
@@ -68,3 +35,38 @@ releases:
         args:
           - -c
           - kubectl apply -f ./karpenter/karpenter_cleanup.yaml -n karpenter
+  - name: grafana
+    namespace: grafana
+    createNamespace: true
+    chart: grafana/grafana
+    version: 6.52.8
+    wait: true
+    values:
+      - ./grafana/values.yaml
+  - name: argoworkflow
+    namespace: argo
+    createNamespace: true
+    chart: argo/argo-workflows
+    version: 0.33.0
+    wait: true
+    values:
+      - ./argo/values.yaml
+    hooks:
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/token.yaml -n argo
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/argoworkflow/role.yaml -n argo
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/argoworkflow/argoworkflows.yaml -n argo

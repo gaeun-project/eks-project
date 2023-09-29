@@ -92,10 +92,10 @@ metadata:
   name: default
 spec:
   # subnetSelector:
-  #   aws-ids: ["subnet-078a50f0c4dde1695","subnet-097da12541cec5816","subnet-0cb6a0ddfebac6cd7"]
+  #   aws-ids: []
   subnetSelector:
     karpenter.sh/discovery: eks-project-prd
-  # securityGroupSelector:
-  #   karpenter.sh/discovery: eks-project-prd
   securityGroupSelector:
-    # aws-ids: 
+    karpenter.sh/discovery: eks-project-prd
+  # securityGroupSelector:
+  #   aws-ids: 

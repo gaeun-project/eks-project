@@ -12,6 +12,24 @@ spec:
       labels:
         app: without-toleration
     spec:
+      serviceAccountName: secret-sa # 생성했던 IRSA 이름
+      volumes: # 볼륨 정의
+      - name: secrets-store-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "my-secret-provider" # 방금 생성했던 secret provider의 이름
       containers:
-      - name: nginx
+      - name: nginx-deployment
         image: nginx
+        ports:
+        - containerPort: 80
+        envFrom:
+        - secretRef:
+            name: my-secret # secret provider에서 설정한 secret의 이름
+        volumeMounts: # 마운트 path 정의
+        - name: secrets-store-inline # 볼륨 정의했던 이름과 동일해야한다.
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+

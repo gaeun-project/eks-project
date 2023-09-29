@@ -1,8 +1,8 @@
 usage:
-	@echo "tf.all-setup : Setup Terraform VPC -> EKS -> HELM "
-	@echo "tf.all-clean : Delete Terraform HELM -> EKS -> VPC"
+	@echo "tf.all-setup : Setup Terraform VPC -> EKS -> HELM-> IAM"
+	@echo "tf.all-clean : Delete Terraform IAM -> HELM -> EKS -> VPC"
 	@echo "argo.setup : Setup argoworkflow"
-	@echo "arog.update : Update argoworkflow"
+	@echo "argo.update : Update argoworkflow"
 	@echo "argo.clean : Delete argoworkflow"
 
 tf.all-setup:
@@ -14,9 +14,11 @@ tf.all-setup:
 	@terraform -chdir=iac/terraform/iam apply -auto-approve
 	@terraform -chdir=iac/terraform/helm init
 	@terraform -chdir=iac/terraform/helm apply -auto-approve
+	@aws eks --region ap-northeast-2 update-kubeconfig --name eks-project-prd --profile gaeun-dev
 	
 
 tf.all-clean:
+	@helmfile -f ./helm/helmfile.yaml -e default destroy
 	@terraform -chdir=iac/terraform/iam init
 	@terraform -chdir=iac/terraform/iam destroy -auto-approve
 	@terraform -chdir=iac/terraform/helm init

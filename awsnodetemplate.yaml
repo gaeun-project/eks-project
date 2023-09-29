@@ -1,9 +1,0 @@
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
-metadata:
-  name: default
-spec:
-  subnetSelector:
-    karpenter.sh/discovery: eks-project-prd
-  securityGroupSelector:
-    aws-ids: "sg-00c81b86013f93ca4"
