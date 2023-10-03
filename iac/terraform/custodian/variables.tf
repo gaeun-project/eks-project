@@ -9,3 +9,7 @@ variable s3_bucket {
 variable key {
   description = "key to use"
 }
+variable image_uri {
+  description = "The URI of the Docker image in ECR"
+  type        = string
+}

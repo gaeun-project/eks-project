@@ -36,10 +36,10 @@ resource "aws_iam_role_policy_attachment" "policy_attachment" {
 }
 
 
-variable "image_uri" {
-  description = "The URI of the Docker image in ECR"
-  type        = string
-}
+# variable "image_uri" {
+#   description = "The URI of the Docker image in ECR"
+#   type        = string
+# }
 
 
 resource "aws_lambda_function" "lambda" {

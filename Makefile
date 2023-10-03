@@ -15,7 +15,8 @@ tf.all-setup:
 	@terraform -chdir=iac/terraform/helm init
 	@terraform -chdir=iac/terraform/helm apply -auto-approve
 	@aws eks --region ap-northeast-2 update-kubeconfig --name eks-project-prd --profile gaeun-dev
-	
+
+# 마지막에 helmfile 적용을 안해놓은 이유가 nodegroup에 taint와 label를 적용하여 특정 pod만 배정되도록 하기 위해서이다.	
 
 tf.all-clean:
 	@helmfile -f ./helm/helmfile.yaml -e default destroy
