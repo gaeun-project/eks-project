@@ -14,14 +14,14 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest
       tolerations:
       - key: "karpenter-spot-node"
         # operator: "Equal"
         # value: "enabled"
         effect: "NoSchedule"
-      - key: "node.kubernetes.io/memory-pressure"
-        operator: "Exists"
-        effect: "NoSchedule"
+      # - key: "node.kubernetes.io/memory-pressure"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
       nodeSelector:
         KarpenterNode: "spot"

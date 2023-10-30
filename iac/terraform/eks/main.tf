@@ -84,16 +84,16 @@ module "eks" {
 
       instance_types = ["t3.medium"]
       capacity_type  = "ON_DEMAND"
-      # labels = {
-      #   label_karpenter = "enabled"
-      # }
-      # taints = {
-      #   dedicated = {
-      #     key    = "taint_karpenter"
-      #     value  = "enabled"
-      #     effect = "NO_SCHEDULE"
-      #   }
-      # }
+      labels = {
+        label_karpenter = "enabled"
+      }
+      taints = {
+        dedicated = {
+          key    = "taint_karpenter"
+          value  = "enabled"
+          effect = "NO_SCHEDULE"
+        }
+      }
     }
   }
   # aws-auth configmap

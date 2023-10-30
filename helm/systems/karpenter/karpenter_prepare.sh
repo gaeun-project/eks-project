@@ -1,6 +1,8 @@
 
 export KARPENTER_VERSION='v0.29.2'
 
+export AWS_PROFILE=gaeun-dev
+
 export CLUSTER_NAME='eks-project-prd'
 
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)

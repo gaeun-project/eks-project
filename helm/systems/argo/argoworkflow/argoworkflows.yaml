@@ -33,7 +33,7 @@ spec:
               value: "aws glue start-crawler --name ec2_metadata_crawlers"
     - name: get-parameters-and-generate-jobs
       script:
-        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest # Replace with the docker image you prepared
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest
       nodeSelector: # nodeSelector 추가
         KarpenterNode: spot
       tolerations: # 테인트에 맞는 toleration 추가

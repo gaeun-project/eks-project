@@ -16,7 +16,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        environment: ["describe-ec2-resource"]
+        environment: ["resources_centralization"]
     runs-on: ubuntu-22.04
     environment: ${{ matrix.environment }}
     steps:
@@ -33,12 +33,6 @@ jobs:
       - name: Login-ecr
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Debug file structure
-        run: |
-          ls -l
-          ls -l ./features/resources/Describe_Resource
-
 
       - name: Build and Push
         run: |
