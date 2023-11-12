@@ -1,5 +1,21 @@
 # MAD Project(Muti Account Dashboard Project)
 
+### 목차🗂
+
+[프로젝트개요](https://github.com/gaeun-project/eks-project/tree/dev#%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EA%B0%9C%EC%9A%94)
+
+[프로젝트 배경](https://github.com/gaeun-project/eks-project/tree/dev#%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EB%B0%B0%EA%B2%BD)
+
+[프로젝트 설명](https://github.com/gaeun-project/eks-project/tree/dev#%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%84%A4%EB%AA%85)
+
+[프로젝트 아이디어 및 구현 방법](https://github.com/gaeun-project/eks-project/tree/dev#%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EC%95%84%EC%9D%B4%EB%94%94%EC%96%B4-%EB%B0%8F-%EA%B5%AC%ED%98%84-%EB%B0%A9%EB%B2%95)
+
+[기술 스택](https://github.com/gaeun-project/eks-project/tree/dev#%EA%B8%B0%EC%88%A0-%EC%8A%A4%ED%83%9D)
+
+[아키텍처 및 흐름도](https://github.com/gaeun-project/eks-project/tree/dev#%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98-%EB%B0%8F-%ED%9D%90%EB%A6%84%EB%8F%84)
+
+[느낀 점](https://github.com/gaeun-project/eks-project/tree/dev#%EB%8A%90%EB%82%80-%EC%A0%90)
+
 ## 프로젝트 소개
 
 **기간 :**
@@ -70,7 +86,7 @@ Grafana, Karpenter, Helm, HelmFile, Terraform, Custodian, Argo workflows
 
 * **ETC:**
 
-Github Action, Slack, Google Sheets
+Github Actions, Slack, Google Sheets
 
 ## 아키텍처 및 흐름도
 
@@ -78,25 +94,21 @@ Github Action, Slack, Google Sheets
 
 ![1698674886049](image/README/1698674886049.png)
 
+### 태그 관리 최적화(흐름도)
+
 ![1698674935387](image/README/1698674935387.png)
 
-
 ---
-
-
 
 ## 중앙화된 리소스 시각화(아키텍처)**:**
 
 ![1698757150323](image/README/1698757150323.png)
 
-
 ### 중앙화된 리소스 시각화(**흐름도):**
 
 ![1698757187482](image/README/1698757187482.png)
 
-
 ---
-
 
 ## **비용 얼럿(아키텍처) :**
 
@@ -106,15 +118,11 @@ Github Action, Slack, Google Sheets
 
 ![1698757317566](image/README/1698757317566.png)
 
-
 ---
-
-
 
 ## 프로젝트의 간단한 EKS 아키텍처
 
 ![1698760398188](image/README/1698760398188.png)
-
 
 ## 느낀 점
 
