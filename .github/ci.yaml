@@ -1,0 +1,44 @@
+name: ci
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+on: 
+  push:
+    branches:
+      - main2 # main
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: describe-ec2-resource	
+
+jobs:
+  aws_change_resource_tag_job:
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ["resources_centralization"]
+    runs-on: ubuntu-22.04
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login-ecr
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and Push
+        run: |
+          ls -l
+          docker build . --file ./features/resources/Describe_Resource/Dockerfile --tag ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+
+      - name: Push the Docker image
+        run: docker push ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+

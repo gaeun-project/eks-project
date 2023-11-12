@@ -3,7 +3,7 @@ kind: CronWorkflow
 metadata:
   name: parallel-cronjob-workflow-cron
 spec:
-  schedule: "* * * * *"
+  schedule: "*/10 * * * *"
   workflowSpec:
     serviceAccountName: workflows-sa
     entrypoint: parallel-with-param
@@ -33,7 +33,12 @@ spec:
               value: "aws glue start-crawler --name ec2_metadata_crawlers"
     - name: get-parameters-and-generate-jobs
       script:
-        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest # Replace with the docker image you prepared
+        image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/pyhon:latest
+      nodeSelector: # nodeSelector 추가
+        KarpenterNode: spot
+      tolerations: # 테인트에 맞는 toleration 추가
+        - key: "karpenter-spot-node"
+          effect: "NoSchedule"
     - name: parallel-workflow
       inputs:
         parameters:
@@ -45,6 +50,11 @@ spec:
         image: 750876142122.dkr.ecr.ap-northeast-2.amazonaws.com/describe-ec2-resource:ce48e0475d74f9736eb5476526294ee9615749eb # replace with your bash image
         command: [sh, -c]
         args: ["export account={{inputs.parameters.account}}; export service={{inputs.parameters.service}}; export region={{inputs.parameters.region}}; export role={{inputs.parameters.role}}; sh Describe_Resource.sh"]
+      nodeSelector: # nodeSelector 추가
+        KarpenterNode: spot
+      tolerations: # 테인트에 맞는 toleration 추가
+        - key: "karpenter-spot-node"
+          effect: "NoSchedule"
     - name: aws-cli
       inputs:
         parameters:
@@ -53,3 +63,8 @@ spec:
         image: amazon/aws-cli
         command: ["sh", "-c"]
         args: ["{{inputs.parameters.command}}"]
+      nodeSelector: # nodeSelector 추가
+        KarpenterNode: spot
+      tolerations: # 테인트에 맞는 toleration 추가
+        - key: "karpenter-spot-node"
+          effect: "NoSchedule"

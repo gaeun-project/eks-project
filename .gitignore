@@ -42,3 +42,7 @@ temp/
 
 
 iac/terraform/helm/values/*
+
+# 테스트 파일
+tests/
+

@@ -1,8 +1,8 @@
 usage:
-	@echo "tf.all-setup : Setup Terraform VPC -> EKS -> HELM "
-	@echo "tf.all-clean : Delete Terraform HELM -> EKS -> VPC"
+	@echo "tf.all-setup : Setup Terraform VPC -> EKS -> HELM-> IAM"
+	@echo "tf.all-clean : Delete Terraform IAM -> HELM -> EKS -> VPC"
 	@echo "argo.setup : Setup argoworkflow"
-	@echo "arog.update : Update argoworkflow"
+	@echo "argo.update : Update argoworkflow"
 	@echo "argo.clean : Delete argoworkflow"
 
 tf.all-setup:
@@ -10,17 +10,25 @@ tf.all-setup:
 	@terraform -chdir=iac/terraform/vpc apply -auto-approve
 	@terraform -chdir=iac/terraform/eks init
 	@terraform -chdir=iac/terraform/eks apply -auto-approve	
+	@terraform -chdir=iac/terraform/iam init
+	@terraform -chdir=iac/terraform/iam apply -auto-approve
 	@terraform -chdir=iac/terraform/helm init
 	@terraform -chdir=iac/terraform/helm apply -auto-approve
-	
+	@aws eks --region ap-northeast-2 update-kubeconfig --name eks-project-prd --profile gaeun-dev
+
+# 마지막에 helmfile 적용을 안해놓은 이유가 nodegroup에 taint와 label를 적용하여 특정 pod만 배정되도록 하기 위해서이다.	
 
 tf.all-clean:
+	@helmfile -f ./helm/helmfile.yaml -e default destroy
+	@terraform -chdir=iac/terraform/iam init
+	@terraform -chdir=iac/terraform/iam destroy -auto-approve
 	@terraform -chdir=iac/terraform/helm init
 	@terraform -chdir=iac/terraform/helm destroy -auto-approve
 	@terraform -chdir=iac/terraform/eks init
 	@terraform -chdir=iac/terraform/eks destroy -auto-approve	
 	@terraform -chdir=iac/terraform/vpc init
 	@terraform -chdir=iac/terraform/vpc destroy -auto-approve
+	
 
 argo.setup:
 	@kubectl create ns argo

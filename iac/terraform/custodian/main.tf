@@ -36,10 +36,10 @@ resource "aws_iam_role_policy_attachment" "policy_attachment" {
 }
 
 
-variable "image_uri" {
-  description = "The URI of the Docker image in ECR"
-  type        = string
-}
+# variable "image_uri" {
+#   description = "The URI of the Docker image in ECR"
+#   type        = string
+# }
 
 
 resource "aws_lambda_function" "lambda" {
@@ -47,7 +47,7 @@ resource "aws_lambda_function" "lambda" {
 
   # ECR에 저장된 컨테이너 이미지 URI
   image_uri = var.image_uri
-  package_type  = "Image"
+  package_type = "Image"
   # 이미 정해진 IAM 역할
   role = aws_iam_role.lambda_role.arn
 

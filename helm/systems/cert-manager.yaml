@@ -1,26 +1,82 @@
 
 # repo external-dns와 aws_loadbalancer_controller의 경우는 terraform으로 배포 기본적으로 있어야 하는 것들이라서 terraform으로 배포할 때 같이 배포.
 repositories:
+- name: secrets-store-csi-driver
+  url: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+
 - name: grafana
   url: https://grafana.github.io/helm-charts
-- name: hashicorp
-  url: https://helm.releases.hashicorp.com  
+# - name: hashicorp
+#   url: https://helm.releases.hashicorp.com  
 - name: argo
   url: https://argoproj.github.io/argo-helm
-- name: aws-ebs-csi-driver
-  url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-# - name: karpenter
-#   url: oci://public.ecr.aws/karpenter/karpenter
+# - name: aws-ebs-csi-driver
+#   url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+- name: karpenter
+  url: public.ecr.aws/karpenter
+  oci: true
 
 releases:
+  - name: karpenter
+    namespace: karpenter
+    createNamespace: true
+    chart: karpenter/karpenter
+    version: "v0.29.2"
+    wait: true
+    values:
+      - ./karpenter/values.yaml 
+    hooks:
+      - events: ['prepare']
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - . ./karpenter/karpenter_prepare.sh
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./karpenter/karpenter_cleanup.yaml -n karpenter
+  # - name: secrets-store-csi-driver
+  #   namespace: kube-system
+  #   chart: secrets-store-csi-driver/secrets-store-csi-driver
+  #   version: 1.3.4
+  #   wait: true
+  #   values:
+  #     - ./secret/values.yaml
   - name: grafana
     namespace: grafana
     createNamespace: true
     chart: grafana/grafana
     version: 6.52.8
+    wait: true
     values:
       - ./grafana/values.yaml
-
-
-
-
+  - name: argoworkflow
+    namespace: argo
+    createNamespace: true
+    chart: argo/argo-workflows
+    version: 0.33.0
+    wait: true
+    values:
+      - ./argo/values.yaml
+    hooks:
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/token.yaml -n argo
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/argoworkflow/role.yaml -n argo
+      - events: ["cleanup"]
+        showlogs: true
+        command: "/bin/sh"
+        args:
+          - -c
+          - kubectl apply -f ./argo/argoworkflow/argoworkflows.yaml -n argo
